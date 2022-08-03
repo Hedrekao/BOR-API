@@ -6,10 +6,10 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors')
 const multer = require('multer')
-const {GridFsStorage} = require('multer-gridfs-storage')
+const { GridFsStorage } = require('multer-gridfs-storage')
 const Grid = require('gridfs-stream')
 const methodOverride = require('method-override')
-const bodyParser =  require('body-parser')
+const bodyParser = require('body-parser')
 var usersRouter = require('./routes/users');
 var pastMatchesRouter = require('./routes/pastMatchesAPI');
 var futureMatchesRouter = require('./routes/futureMatchesAPI');
@@ -21,7 +21,7 @@ require('dotenv').config()
 const mongoose = require('mongoose')
 
 
- mongoose.connect(process.env.DATABASE_CONNECTION, () => {
+mongoose.connect(process.env.DATABASE_CONNECTION, () => {
   console.log('connected to database')
 })
 
@@ -75,13 +75,33 @@ app.use('/futureMatches', futureMatchesRouter)
 app.use('/posts', postsRouter)
 
 
-app.post('/images', upload.single('file'), (req, res) => {
-  console.log('image was uploaded')
-  res.json({ message: "image was uploaded" })
+app.post('/posts', upload.single('file'), async (req, res) => {
+  if (process.env.API_KEY == req.body.api_key) {
+    try {
+
+      const file = await gfs.findOne({ filename: req.file.originalname })
+      if (file) {
+        const post = new Post({ photo_id: file._id, title: req.body.title, content: req.body.content })
+        await post.save()
+        console.log(post)
+      }
+      else {
+        const post = new Post({ title: req.body.title, content: req.body.content })
+        await post.save()
+        console.log(post)
+      }
+
+
+
+    }
+    catch (e) {
+      res.json({ message: e.message })
+    }
+  }
 })
 
-app.get('/images/:filename',  (req, res) => {
-  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+app.get('/images/:id', (req, res) => {
+  gfs.files.findOne({ _id: req.params.id }, (err, file) => {
     // Check if file
     if (!file || file.length === 0) {
       return res.status(404).json({
@@ -99,18 +119,18 @@ app.get('/images/:filename',  (req, res) => {
         err: 'Not an image'
       });
     }
-  }); 
+  });
 })
 
 
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
