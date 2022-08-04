@@ -8,6 +8,7 @@ var cors = require('cors')
 const multer = require('multer')
 const { GridFsStorage } = require('multer-gridfs-storage')
 const Grid = require('gridfs-stream')
+const Post = require('./models/Post')
 const methodOverride = require('method-override')
 const bodyParser = require('body-parser')
 var usersRouter = require('./routes/users');
@@ -58,6 +59,7 @@ const storage = new GridFsStorage({
 const upload = multer({ storage });
 
 var app = express();
+app.set('view engine', 'pug')
 
 app.use(bodyParser.json())
 app.use(methodOverride('_method'))
@@ -78,14 +80,14 @@ app.use('/posts', postsRouter)
 app.post('/posts', upload.single('file'), async (req, res) => {
   if (process.env.API_KEY == req.body.api_key) {
     try {
-
-      const file = await gfs.findOne({ filename: req.file.originalname })
+      gfs.files.findOne({ filename: req.file.originalname }, async (err, file) => {
       if (file) {
         const post = new Post({ photo_id: file._id, title: req.body.title, content: req.body.content })
         await post.save()
         console.log(post)
       }
       else {
+        console.log(req.body.title)
         const post = new Post({ title: req.body.title, content: req.body.content })
         await post.save()
         console.log(post)
@@ -93,6 +95,7 @@ app.post('/posts', upload.single('file'), async (req, res) => {
 
 
 
+    })
     }
     catch (e) {
       res.json({ message: e.message })
@@ -101,8 +104,10 @@ app.post('/posts', upload.single('file'), async (req, res) => {
 })
 
 app.get('/images/:id', (req, res) => {
-  gfs.files.findOne({ _id: req.params.id }, (err, file) => {
+  const ObjectID = mongoose.mongo.BSONPure.ObjectID;
+  gfs.files.findOne({ _id : ObjectID(req.params.id)}, (err, file) => {
     // Check if file
+    console.log(file)
     if (!file || file.length === 0) {
       return res.status(404).json({
         err: 'No file exists'
