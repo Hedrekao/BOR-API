@@ -34,25 +34,25 @@ router.patch('/', async (req,res) => {
     }
 })
 
-router.post('/', async (req, res) => {
+// router.post('/', async (req, res) => {
 
-    if(process.env.API_KEY == req.body.api_key)
-    {
-        try {
+//     if(process.env.API_KEY == req.body.api_key)
+//     {
+//         try {
 
 
-    const post = new Post({ title: req.body.title, content: req.body.content })
+//     const post = new Post({ title: req.body.title, content: req.body.content })
     
-        await post.save()
-        console.log(post)
+//         await post.save()
+//         console.log(post)
 
-    }
-    catch (e) {
-        res.json({ message: e.message })
-    }
-    }
+//     }
+//     catch (e) {
+//         res.json({ message: e.message })
+//     }
+//     }
     
-})
+// })
 
 router.get('/:id', async (req, res, next) => {
     try {
