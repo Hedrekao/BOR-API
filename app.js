@@ -59,7 +59,6 @@ const storage = new GridFsStorage({
 const upload = multer({ storage });
 
 var app = express();
-app.set('view engine', 'pug')
 
 app.use(bodyParser.json())
 app.use(methodOverride('_method'))
@@ -85,12 +84,14 @@ app.post('/posts', upload.single('file'), async (req, res) => {
         const post = new Post({ photo_id: file._id, title: req.body.title, content: req.body.content })
         await post.save()
         console.log(post)
+        res.json(post)
       }
       else {
         console.log(req.body.title)
         const post = new Post({ title: req.body.title, content: req.body.content })
         await post.save()
         console.log(post)
+        res.json(post)
       }
 
 
@@ -104,10 +105,9 @@ app.post('/posts', upload.single('file'), async (req, res) => {
 })
 
 app.get('/images/:id', (req, res) => {
-  const ObjectID = mongoose.mongo.BSONPure.ObjectID;
-  gfs.files.findOne({ _id : ObjectID(req.params.id)}, (err, file) => {
+  const id = mongoose.Types.ObjectId(req.params.id)
+  gfs.files.findOne({ "_id" : id}, (err, file) => {
     // Check if file
-    console.log(file)
     if (!file || file.length === 0) {
       return res.status(404).json({
         err: 'No file exists'
@@ -142,7 +142,7 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.json({error: err.message});
 });
 
 module.exports = app;
